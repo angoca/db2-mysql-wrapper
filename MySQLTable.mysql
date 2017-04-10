@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS mytable;
 
 CREATE TABLE mytable (
-  values int(10),
+  vals int(10)
 );
 
 INSERT INTO mytable VALUES
