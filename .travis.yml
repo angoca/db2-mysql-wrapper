@@ -1,7 +1,7 @@
-#language: java
+language: java
 
-#services:
-#  - mysql
+services:
+  - mysql
 
 before_install:
   # Parallel download
@@ -47,10 +47,11 @@ before_install:
 
   # JAVA
 
-   - find .
-   - find / -name "*.jar*
-   - javac MySQLTable || echo false
-   - cp MySQLTable.class $HOME/sqllib/function/com/github/angoca/db2MysqlWrapper
+   # Compiles and deploys the .class
+  - find .
+  - find / -name "*.jar*"
+  - javac MySQLTable
+  - cp MySQLTable.class $HOME/sqllib/function/com/github/angoca/db2MysqlWrapper
 
 install:
   # MYSQL
