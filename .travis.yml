@@ -48,8 +48,7 @@ before_install:
   # JAVA
 
    # Compiles and deploys the .class
-  - find .
-  - find / -name "*.jar*"
+  - cd ; find .
   - javac MySQLTable
   - cp MySQLTable.class $HOME/sqllib/function/com/github/angoca/db2MysqlWrapper
 
