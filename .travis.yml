@@ -1,7 +1,7 @@
-language: java
+#language: java
 
-services:
-  - mysql
+#services:
+#  - mysql
 
 before_install:
   # Parallel download
@@ -46,7 +46,7 @@ before_install:
    # JAVA
 
    - find .
-   - java com.github.angoca.db2mysqlwrapper.MySQLTable || echo false
+   - javac MySQLTable || echo false
 
 install:
   # DB2
