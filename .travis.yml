@@ -1,0 +1,92 @@
+language: java
+
+services:
+  - mysql
+
+before_install:
+  # Parallel download
+  - mvn > /dev/null &
+  - sudo apt-get install aria2 curl -y
+  - sudo ./travis/update.sh > /dev/null &
+
+  # Retrieves and extracts the DB2 binaries
+  # If it does not work, change it according to the next page:
+  # https://github.com/angoca/db2-docker/wiki/db2-link-server_t
+  - DOWNLOAD_LINK=$(curl --url https://raw.githubusercontent.com/wiki/angoca/db2-docker/db2-link-server_t.md -s | tail -1) ; echo ${DOWNLOAD_LINK} ; cd /tmp ; aria2c -x 16 ${DOWNLOAD_LINK} ; tar zxvf v10.5fp*_linuxx64_server_t.tar.gz
+
+  # DB2
+
+  # INSTALL
+
+  # Install the required libraries
+  - sudo apt-get update -qq
+  - sudo apt-get install libaio1 lib32stdc++6 -y
+  - sudo apt-get install -qq libpam-ldap:i386
+  - sudo ln -s /lib/i386-linux-gnu/libpam.so.0 /lib/libpam.so.0
+
+  # Checks the prerequisites
+  - cd /tmp/server_t ; ./db2prereqcheck -l
+  # Install DB2 and creates an instance (Response file)
+  - sudo ./db2setup -r  ${TRAVIS_BUILD_DIR}/travis/db2.rsp || cat /tmp/db2setup.log
+  # Changes the security
+  - sudo usermod -a -G db2iadm1 $USER
+  - sudo chsh -s /bin/bash db2inst1
+  - sudo su - db2inst1 -c "db2 update dbm cfg using SYSADM_GROUP db2iadm1 ; db2stop ; db2start"
+  # Creates the database
+  - sudo su - db2inst1 -c "db2 create db travis ; db2 connect to travis ; db2 grant dbadm on database to user $USER"
+  - . ~db2inst1/sqllib/db2profile ; db2 connect to travis
+  
+  # MYSQL
+  
+  # Creates the database
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS travis;'
+  - mysql -u root -e "CREATE USER 'angoca'@'localhost' IDENTIFIED BY 'angoca';"
+  - mysql -u root -e "GRANT ALL ON travis.* TO 'angoca'@'localhost';"
+
+   # JAVA
+
+   - find .
+   - java com.github.angoca.db2mysqlwrapper.Wrapper || echo false
+
+install:
+  # DB2
+
+  # Install your code
+  - db2 "CREATE OR REPLACE FUNCTION MYSQL_TABLE(
+  SERVER VARCHAR(128),
+  PORT INTEGER DEFAULT 3306,
+  DATABASE VARCHAR(64),
+  USERNAME VARCHAR(32),
+  PASSWORD VARCHAR(32),
+  QUERY VARCHAR(128) DEFAULT 'SELECT 1 FROM DUAL'
+ ) RETURNS TABLE (user varchar(32), date varchar(50), message varchar(140))
+     language java
+     external name 'MySQLTable.query'
+     parameter style db2general
+     not deterministic
+     fenced
+     returns null on null input
+     no sql
+     external action
+     no scratchpad
+     final call
+     disallow parallel"
+
+  # MYSQL
+
+  # Creates tables in MySQL and populates it.
+  - mysql -e "USE travis;
+    DROP TABLE IF EXISTS mytable;
+
+    CREATE TABLE mytable (
+      values int(10) NOT NULL AUTO_INCREMENT,
+    );
+    INSERT INTO mytable VALUES (121212),(343434),(565656);"
+
+script:
+  # Execute your scripts
+  - echo Hola
+
+after_script:
+  # If there is any error, shows the logs
+  - cat /home/db2inst1/sqllib/db2dump/db2diag.log
