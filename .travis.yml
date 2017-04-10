@@ -46,7 +46,7 @@ before_install:
    # JAVA
 
    - find .
-   - java com.github.angoca.db2mysqlwrapper.Wrapper || echo false
+   - java com.github.angoca.db2mysqlwrapper.MySQLTable || echo false
 
 install:
   # DB2
