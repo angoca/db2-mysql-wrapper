@@ -1,8 +1,8 @@
-pacakge com.github.angoca.db2mysqlwrapper
-
 import java.util.Iterator;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
@@ -11,7 +11,7 @@ import COM.ibm.db2.app.UDF;
 /**
  * This class allows to create a UDF that access a MySQL database and retrieve the data.
  * <p>
- * The following lines are necessary to create the UDF in DB2, by
+ * The following lines are necessaries to create the UDF in DB2, by
  * associating the Java class file and the function.
  * <p>
  * TODO The return should be dynamic.
@@ -36,16 +36,14 @@ CREATE OR REPLACE FUNCTION MYSQL_TABLE(
      final call
      disallow parallel;
     </code>
- * 
+ *
  * @author Andres Gomez Casanova (AngocA)
- * @version 20170410
  */
 public class MySQLTable extends UDF {
-
     /**
      * MySQL JDBC driver.
      */
-    private static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";  
+    private static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
     /**
      * Connection to MySQL.
      */
@@ -59,10 +57,11 @@ public class MySQLTable extends UDF {
      */
     ResultSet rs = null;
 
+
     /**
      * Establishes a connection to MySQL with the given credentials
      * an performs the query in the remote database.
-     * 
+     *
      * @param server
      *            Name of the server or IP address where the MySQL server resides.
      * @param port
@@ -80,13 +79,14 @@ public class MySQLTable extends UDF {
      */
     public void query(String server, int port, String database, String username, String password, String query)
             throws Exception {
+        int value = 0;
         switch (getCallType()) {
         case SQLUDF_TF_FIRST:
             // Established the connection to MySQL.
             Class.forName("com.mysql.jdbc.Driver");
             conn = DriverManager.getConnection("jdbc:mysql://" + server + ":" + port + "/" + database +"?" +
                                    "user=" + username + "&password=" + password);
-// TODO Validate the in parameters, in order to check that the table exists.
+// TODO Valida los datos de entrada, que la tabla exista.
             break;
         case SQLUDF_TF_OPEN:
             // Creates the Statement and executes it.
@@ -94,10 +94,10 @@ public class MySQLTable extends UDF {
             rs = stmt.executeQuery(query);
             break;
         case SQLUDF_TF_FETCH:
-            if (rs.hasNext()) {
-// TODO Retrieve the data dynamically based on the metadata of the table.
-                user = tweet.getFromUser();
-                set(2, user);
+            if (rs.next()) {
+// TODO recupera los datos dinánicamente basado en la metadata (Programa de liberty y computec)
+                value = rs.getInt("id");
+                set(1, value);
             } else {
                 // No more rows. Returns SQLSTATE
                 setSQLstate("02000");
@@ -117,4 +117,4 @@ public class MySQLTable extends UDF {
         }
 // TODO catch the errors and convert them to SQLSTATE if possible.
     }
-} 
+}
