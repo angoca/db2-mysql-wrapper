@@ -35,6 +35,7 @@ before_install:
   # Creates the database
   - sudo su - db2inst1 -c "db2 create db travis ; db2 connect to travis ; db2 grant dbadm on database to user $USER"
   - . ~db2inst1/sqllib/db2profile ; db2 connect to travis
+  - mkdir -p $HOME/sqllib/function/com/github/angoca/db2MysqlWrapper
   
   # MYSQL
   
@@ -42,51 +43,30 @@ before_install:
   - mysql -e 'CREATE DATABASE IF NOT EXISTS travis;'
   - mysql -u root -e "CREATE USER 'angoca'@'localhost' IDENTIFIED BY 'angoca';"
   - mysql -u root -e "GRANT ALL ON travis.* TO 'angoca'@'localhost';"
+  - mysql -u root -e "SET PASSWORD FOR 'angoca'@'localhost' = PASSWORD('angoca');"
 
-   # JAVA
+  # JAVA
 
    - find .
+   - find / -name "*.jar*
    - javac MySQLTable || echo false
+   - cp MySQLTable.class $HOME/sqllib/function/com/github/angoca/db2MysqlWrapper
 
 install:
-  # DB2
-
-  # Install your code
-  - db2 "CREATE OR REPLACE FUNCTION MYSQL_TABLE(
-  SERVER VARCHAR(128),
-  PORT INTEGER DEFAULT 3306,
-  DATABASE VARCHAR(64),
-  USERNAME VARCHAR(32),
-  PASSWORD VARCHAR(32),
-  QUERY VARCHAR(128) DEFAULT 'SELECT 1 FROM DUAL'
- ) RETURNS TABLE (user varchar(32), date varchar(50), message varchar(140))
-     language java
-     external name 'MySQLTable.query'
-     parameter style db2general
-     not deterministic
-     fenced
-     returns null on null input
-     no sql
-     external action
-     no scratchpad
-     final call
-     disallow parallel"
-
   # MYSQL
 
   # Creates tables in MySQL and populates it.
-  - mysql -e "USE travis;
-    DROP TABLE IF EXISTS mytable;
+  - mysql -h "localhost" -u "root" "travis" < "MySQLTable.mysql"
 
-    CREATE TABLE mytable (
-      values int(10) NOT NULL AUTO_INCREMENT,
-    );
-    INSERT INTO mytable VALUES (121212),(343434),(565656);"
+  # DB2
+
+  # Install the stored procedure.
+  - db2 -tvf MySQLTable.db2
 
 script:
   # Execute your scripts
   - echo Hola
 
 after_script:
-  # If there is any error, shows the logs
+  # Shows the DB2Diag.
   - cat /home/db2inst1/sqllib/db2dump/db2diag.log
