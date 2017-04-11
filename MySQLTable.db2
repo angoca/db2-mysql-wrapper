@@ -5,9 +5,9 @@ CREATE OR REPLACE FUNCTION MYSQL_TABLE(
   USERNAME VARCHAR(32),
   PASSWORD VARCHAR(32),
   QUERY VARCHAR(128) DEFAULT 'SELECT 1 FROM DUAL'
- ) RETURNS GENERIC TABLE
+ ) RETURNS TABLE (VALS INT)
      language java
-     external name 'com.github.angoca.db2MysqlWrapper.MySQLTable!query(java.lang.String, java.lang.Integer, java.lang.String, java.lang.String, java.lang.String, java.lang.String)'
+     external name 'com.github.angoca.db2MysqlWrapper.MySQLTable!query(Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String)'
      parameter style db2general
      not deterministic
      fenced
